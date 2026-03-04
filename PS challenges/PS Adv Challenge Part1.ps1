@@ -9,7 +9,6 @@ $DomainDN = "DC=Adatum,DC=Com"
 $OUPath = "OU=$OUName,$DomainDN"
 
 $GroupName = "London Users"
-$GroupDN = "OU=$OUName,$DomainDN"
 
 $ExistingOU = Get-ADOrganizationalUnit -Filter "Name -eq '$OUName'" -SearchBase $DomainDN -ErrorAction SilentlyContinue
 if ($ExistingOU) {
@@ -33,6 +32,7 @@ else
  { 
     New-ADGroup -Name $GroupName -GroupScope Global -GroupCategory Security -Path $OUPath 
     Write-Host "created group $GroupName"
+    $GroupSearch = Get-ADGroup -Filter "Name -eq '$GroupName'" -SearchBase $OUPath -ErrorAction Stop
 }
 
 $LondonSalesUsers = Get-ADUser -Filter "City -eq 'London'" -SearchBase $SalesOU 
@@ -42,5 +42,13 @@ foreach ($user in $LondonSalesUsers) {
     Write-Host "Moved user: $($user.SamAccountName)"
 }
 
-Add-ADGroupMember -Identity $GroupDN -Members $LondonSalesUsers
-Write-Host "added $($LondonSalesUsers.Count) users to Group: $GroupName"
+if ($LondonSalesUsers.Count -gt 0) {
+    Add-ADGroupMember -Identity $GroupSearch.DistinguishedName -Members $LondonSalesUsers
+    Write-Host "added $($LondonSalesUsers.Count) users to Group: $GroupName"
+} else {
+    Write-Host "No London users found in Sales OU to add to Group: $GroupName"
+}
+#Validation
+Get-ADOrganizationalUnit -LDAPFilter '(ou=London)' -SearchBase "DC=Adatum,DC=Com" -SearchScope Subtree
+Get-ADGroup -Filter 'Name -eq "London Users"' -SearchBase "OU=London,DC=Adatum,DC=Com" -SearchScope OneLevel
+Get-ADUser  -SearchBase"OU=London,DC=Adatum,DC=Com" -SearchScope OneLevel -Filter * | Select-Object Name, SamAccountName, City
