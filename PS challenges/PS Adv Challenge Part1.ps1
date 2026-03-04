@@ -49,7 +49,7 @@ foreach ($user in $LondonUsers) {
     Write-Host "added user: $($user.SamAccountName) to Group: $GroupName"
 }
     <# Action that will repeat until the condition is met #>
-}
+
 if ($LondonSalesUsers.Count -gt 0) {
     Add-ADGroupMember -Identity $GroupSearch.DistinguishedName -Members $LondonSalesUsers
     Write-Host "added $($LondonSalesUsers.Count) users to Group: $GroupName"
