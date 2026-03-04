@@ -42,6 +42,14 @@ foreach ($user in $LondonSalesUsers) {
     Write-Host "Moved user: $($user.SamAccountName)"
 }
 
+$LondonUsers = Get-ADUser -SearchBase $OUPath -SearchScope OneLevel -Filter * -Properties * 
+$GroupSearch = Get-ADGroup -Filter "Name -eq '$GroupName'" -SearchBase $OUPath -ErrorAction Stop
+foreach ($user in $LondonUsers) {
+    Add-ADGroupMember -Identity $GroupSearch.DistinguishedName -Members $user
+    Write-Host "added user: $($user.SamAccountName) to Group: $GroupName"
+}
+    <# Action that will repeat until the condition is met #>
+}
 if ($LondonSalesUsers.Count -gt 0) {
     Add-ADGroupMember -Identity $GroupSearch.DistinguishedName -Members $LondonSalesUsers
     Write-Host "added $($LondonSalesUsers.Count) users to Group: $GroupName"
@@ -51,4 +59,5 @@ if ($LondonSalesUsers.Count -gt 0) {
 #Validation
 Get-ADOrganizationalUnit -LDAPFilter '(ou=London)' -SearchBase "DC=Adatum,DC=Com" -SearchScope Subtree
 Get-ADGroup -Filter 'Name -eq "London Users"' -SearchBase "OU=London,DC=Adatum,DC=Com" -SearchScope OneLevel
-Get-ADUser  -SearchBase"OU=London,DC=Adatum,DC=Com" -SearchScope OneLevel -Filter * | Select-Object Name, SamAccountName, City
+Get-ADUser  -SearchBase "OU=London,DC=Adatum,DC=Com" -SearchScope OneLevel -Filter * | Select-Object Name, SamAccountName, City
+Get-ADGroupMember -Identity "London Users" | Get-ADUser -Properties City, Department | Select-Object Name, SamAccountName, City, Department
